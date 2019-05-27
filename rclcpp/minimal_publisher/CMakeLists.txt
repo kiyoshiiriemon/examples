@@ -13,15 +13,16 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
 
 add_executable(publisher_lambda lambda.cpp)
-ament_target_dependencies(publisher_lambda rclcpp std_msgs)
+ament_target_dependencies(publisher_lambda rclcpp std_msgs sensor_msgs)
 
 add_executable(publisher_member_function member_function.cpp)
-ament_target_dependencies(publisher_member_function rclcpp std_msgs)
+ament_target_dependencies(publisher_member_function rclcpp std_msgs sensor_msgs)
 
 add_executable(publisher_not_composable not_composable.cpp)
-ament_target_dependencies(publisher_not_composable rclcpp std_msgs)
+ament_target_dependencies(publisher_not_composable rclcpp std_msgs sensor_msgs)
 
 install(TARGETS
   publisher_lambda

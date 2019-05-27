@@ -13,7 +13,9 @@
 // limitations under the License.
 
 #include "rclcpp/rclcpp.hpp"
-#include "std_msgs/msg/string.hpp"
+#include "rclcpp/time.hpp"
+#include "sensor_msgs/msg/laser_scan.hpp"
+
 using std::placeholders::_1;
 
 class MinimalSubscriber : public rclcpp::Node
@@ -22,16 +24,20 @@ public:
   MinimalSubscriber()
   : Node("minimal_subscriber")
   {
-    subscription_ = this->create_subscription<std_msgs::msg::String>(
+    subscription_ = this->create_subscription<sensor_msgs::msg::LaserScan>(
       "topic", std::bind(&MinimalSubscriber::topic_callback, this, _1));
   }
 
 private:
-  void topic_callback(const std_msgs::msg::String::SharedPtr msg)
+  void topic_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg)
   {
-    RCLCPP_INFO(this->get_logger(), "I heard: '%s'", msg->data.c_str());
+    using builtin_interfaces::msg::Time;
+    rclcpp::Clock ros_clock(RCL_ROS_TIME);
+    double delay_ms = (ros_clock.now() - msg->header.stamp).nanoseconds() / 1e6;
+    //;RCLCPP_INFO(this->get_logger(), "%d %f", msg->ranges.size(), delay_ms)
+    std::cout << msg->ranges.size() << " " << delay_ms << std::endl;
   }
-  rclcpp::Subscription<std_msgs::msg::String>::SharedPtr subscription_;
+  rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr subscription_;
 };
 
 int main(int argc, char * argv[])

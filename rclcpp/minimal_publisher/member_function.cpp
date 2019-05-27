@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <chrono>
+#include <random>
 #include "rclcpp/rclcpp.hpp"
-#include "std_msgs/msg/string.hpp"
+#include "rclcpp/time.hpp"
+#include "sensor_msgs/msg/laser_scan.hpp"
 
 using namespace std::chrono_literals;
 
@@ -23,25 +24,42 @@ using namespace std::chrono_literals;
 
 class MinimalPublisher : public rclcpp::Node
 {
+  std::random_device rd;
 public:
   MinimalPublisher()
   : Node("minimal_publisher"), count_(0)
   {
-    publisher_ = this->create_publisher<std_msgs::msg::String>("topic");
+    publisher_ = this->create_publisher<sensor_msgs::msg::LaserScan>("topic");
     timer_ = this->create_wall_timer(
-      500ms, std::bind(&MinimalPublisher::timer_callback, this));
+      100ms, std::bind(&MinimalPublisher::timer_callback, this));
   }
 
 private:
   void timer_callback()
   {
-    auto message = std_msgs::msg::String();
-    message.data = "Hello, world! " + std::to_string(count_++);
-    RCLCPP_INFO(this->get_logger(), "Publishing: '%s'", message.data.c_str());
+    static int fcnt = 0;
+    size_t data_sizes[] = {25, 250, 2500, 25000, 250000};
+    if (count_ >= 5) {
+        return;
+    }
+    using builtin_interfaces::msg::Time;
+    rclcpp::Clock ros_clock(RCL_ROS_TIME);
+
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<> dis(0., 1.);
+    auto message = sensor_msgs::msg::LaserScan();
+    message.header.stamp = ros_clock.now();
+    //size_t n = (size_t)(dis(gen) * 500 * 1000);
+    message.ranges.resize(data_sizes[count_]);
+    if (fcnt++ == 200) {
+        fcnt = 0;
+        count_++;
+    }
+    RCLCPP_INFO(this->get_logger(), "Publishing scan: '%d'", message.ranges.size());
     publisher_->publish(message);
   }
   rclcpp::TimerBase::SharedPtr timer_;
-  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher_;
+  rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr publisher_;
   size_t count_;
 };
 
